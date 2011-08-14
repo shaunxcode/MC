@@ -1,0 +1,1 @@
+{"vars":{"title":"Site Title of life"},"routes":{"home":"template1","aboutus":"template1","random":"template2","404":"404template","petershouse":"template2","petershouse2":"template2","petershouse23":"template3"},"defaultRoute":"home","notFoundRoute":"404"}
