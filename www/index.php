@@ -15,7 +15,12 @@ class MC {
     public static $content;
 }
 
-MC::$content = json_decode(file_get_contents('../content/' . $path . '.json'));
+$contentFile = '../content/' . $path . '.json'; 
+if(!file_exists($contentFile)) {
+    file_put_Contents($contentFile, '{}');
+}
+
+MC::$content = json_decode(file_get_contents($contentFile)); 
 
 function section($name) {
     if(isset(MC::$content->$name)) {
@@ -43,5 +48,3 @@ if(isset($_SESSION['admin'])) {
 }
 
 include '../footer.inc.php';
-
-

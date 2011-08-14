@@ -1,6 +1,13 @@
 <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/smoothness/jquery-ui.css" type="text/css" media="all" />
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.min.js"></script>
+<script src="/ace/src/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="/ace/src/theme-twilight.js" type="text/javascript" charset="utf-8"></script>
+<script src="/ace/src/mode-javascript.js" type="text/javascript" charset="utf-8"></script>
+<script src="/ace/src/mode-html.js" type="text/javascript" charset="utf-8"></script>
+<script src="/ace/src/mode-php.js" type="text/javascript" charset="utf-8"></script>
+<script src="/ace/src/mode-css.js" type="text/javascript" charset="utf-8"></script>
+
 <script type="text/javascript">
 <?php 
 $ogpath = strtolower(isset($_GET['path']) ? $_GET['path'] : $config->defaultRoute);
@@ -76,7 +83,7 @@ $(function() {
                 position: 'absolute', 
                 left: el.offset().left, 
                 top: el.offset().top,
-                opacity: 0.9})
+                opacity: 0.2})
             .button({
                 text: false,
                 icons: {
@@ -85,25 +92,33 @@ $(function() {
             })
             .appendTo('body')
             .hover(function(){
+				$(this).css('opacity', 1);
                 el.data('oldbg', el.css('background'));
                 el.css('background', '#efefef');
             }, function(){
-                el.css('background', el.data('oldbg'))
+				$(this).css('opacity', 0.2);
+                el.css('background', el.data('oldbg'));
             })
             .click(function() { 
                 $('<div />')
-                    .html($('<textarea >').css({height: 455, width: '100%'}).val(content))
+                    .html($('<div />')
+						.attr('id', 'editor')
+						.css({position: 'relative', height: 455, width: 635})
+						.text(content))
                     .dialog({
-                        width: 800,
-                        height: 600,
-                        modal: true, 
+	                    width: 635,
+	                    height: 580,
+						resizable: false,
                         title: 'Edit ' + section,
+						close: function() {
+							$(this).remove();
+						},
                         buttons: {
                             Cancel: function() {
                                 $(this).dialog('close');
                             },
                             Save: function() { 
-                                var newValue = $('textarea', this).val();
+                                var newValue = editor.getSession().getValue();
 
                                 $.post('/admin.php', {
                                     path: path,
@@ -123,6 +138,12 @@ $(function() {
                             }
                         }
                     });
+
+				    var editor = ace.edit("editor");
+				    editor.setTheme("ace/theme/twilight");
+				    var HTMLMode = require("ace/mode/html").Mode;
+				    editor.getSession().setMode(new HTMLMode());
+
             });
     });
 
@@ -146,6 +167,16 @@ $(function() {
                 ul.append($('<li />').html(key).append(configEditor(val, namespace + '[' + key + ']')));
             }
         });
+		ul.append($('<div />').html($('<button />')
+			.button({
+				icons: {
+					primary: 'ui-icon-plusthick'
+				},
+				text: false
+			})
+			.click(function(){
+				return false;
+			})))
         return ul;
     };
  
@@ -175,13 +206,17 @@ $(function() {
                     }
                 });
         }))
+		.append($('<button />').text('Page Config').button())
         .append($('<button />').text('Edit Template').button().click(function() {
-            $('<div />').html($('<textarea />').css({width: '100%', height: 455}).val(template))
+            $('<div />').html($('<div />')
+					.attr('id', 'editor')
+					.css({position: 'relative', height: 455, width: 635})
+					.text(template))
                 .dialog({
-                    modal: true,
                     title: 'Edit Template',
-                    width: 800,
-                    height: 600,
+                    width: 635,
+                    height: 580,
+					resizable: false,
                     close: function() {
                         $(this).remove();
                     },
@@ -192,7 +227,7 @@ $(function() {
                         Save: function() {
                             $.post('/admin.php', {
                                 template: <?php echo json_encode($config->routes->$path) ?>, 
-                                value: $('textarea', this).val()
+                                value: editor.getSession().getValue()
                             }, function(){
                                 window.location.href = '/' + path;
                             });
@@ -200,14 +235,21 @@ $(function() {
                     }
                 })
 
+			    var editor = ace.edit("editor");
+			    editor.setTheme("ace/theme/twilight");
+				var PHPMode = require("ace/mode/php").Mode;
+			    editor.getSession().setMode(new PHPMode());
         }))
         .append($('<button />').text('Edit Style').button().click(function() {
-            $('<div />').html($('<textarea />').css({width: '100%', height: 455}).val(styles.site))
+            $('<div />').html($('<div />')
+					.attr('id', 'editor')
+					.css({position: 'relative', height: 455, width: 635})
+					.text(styles.site))
                 .dialog({
-                    modal: true,
                     title: 'Edit Style',
-                    width: 800,
-                    height: 600,
+                    width: 635,
+                    height: 580,
+					resizable: false,
                     close: function() {
                         $(this).remove();
                     },
@@ -218,19 +260,45 @@ $(function() {
                         Save: function() {
                             $.post('/admin.php', {
                                 stylesheet: 'site', 
-                                value: $('textarea', this).val()
+                                value: editor.getSession().getValue()
                             }, function(){
                                 window.location.href = '/' + path;
                             });
                         }
                     }
                 })
-        })); 
+
+			    var editor = ace.edit("editor");
+			    editor.setTheme("ace/theme/twilight");
+				var CSSMode = require("ace/mode/css").Mode;
+			    editor.getSession().setMode(new CSSMode());
+			
+        }))
+		.append($('<button />').text('Edit Content').button()); 
 })  
 </script>
 <style>
+	.ui-dialog .ui-dialog-content {
+		padding: 0;
+	}
+
     #adminPanel button { display: block; margin-top: 5px; } 
 
+	#adminPanel { 
+		position: fixed; 
+		top: 0; 
+		right: 0; 
+		padding: .5em; 
+		background: #efefef; 
+		border-left: 1px solid #ccc; 
+		border-bottom: 1px solid #ccc; 
+		opacity: 0.9;
+		
+		-webkit-border-bottom-left-radius: 5px;
+		-moz-border-radius-bottomleft: 5px;
+		border-bottom-left-radius: 5px;
+	}
+	
     .AdminForm ul { list-style-type: none; } 
 
     .AdminForm li > span {
@@ -253,4 +321,4 @@ $(function() {
         display: inline-block;
     } 
 </style> 
-<div id="adminPanel" style="position: fixed; top: 0; right: 0; padding: .5em; background: #efefef; border-left: 1px solid #999; border-bottom: 1px solid #999; opacity: 0.9;"><a href="/admin.php?logout=true">logout</a><br /><br /></div>
+<div id="adminPanel"><a href="/admin.php?logout=true">logout</a><br /><br /></div>
