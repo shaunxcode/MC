@@ -174,7 +174,8 @@ $(function() {
 				},
 				text: false
 			})
-			.click(function(){
+			.click(function() {
+				alert('yeah dawg');
 				return false;
 			})))
         return ul;
