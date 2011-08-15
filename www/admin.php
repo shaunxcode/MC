@@ -48,7 +48,7 @@ else if(isset($_POST['path']) && isset($_POST['section']) && isset($_POST['value
 			AuditableFile::save($section . '.inc.php', $_POST['value']);
         } else {
 			$content = new JSONAuditableFile(DIR_CONTENT . $path);
-			$content->$section = $_POST['value'];
+			$content->data->$section = $_POST['value'];
 			$content->update();
         }
     }
