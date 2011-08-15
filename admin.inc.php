@@ -10,18 +10,13 @@
 
 <script type="text/javascript">
 <?php 
-$ogpath = strtolower(isset($_GET['path']) ? $_GET['path'] : $config->defaultRoute);
-if(!isset($config->routes->$ogpath)) {
-    $templates = array();
-    foreach(glob('../template/*.inc.php') as $template) {
-        $last = explode('/', $template);
-        $templates[] = current(explode('.', end($last))); 
-    }
+$ogpath = strtolower(isset($_GET['path']) ? $_GET['path'] : MC::$config->defaultRoute);
+if(!isset(MC::$config->routes->$ogpath)) {
 ?>
 
 $(function() {
     var combo = $('<select />');
-    $.each(<?php echo json_encode($templates) ?>, function(i, template) {
+    $.each(<?php echo json_encode(MC::getTemplates()) ?>, function(i, template) {
         combo.append($('<option />').text(template).attr('value', template));
     }); 
 
@@ -33,7 +28,7 @@ $(function() {
             width: 600,
             buttons: {
                 Cancel: function() {
-                    window.location.href = '/' + <?php echo json_encode($path) ?>;
+                    window.location.href = '/' + <?php echo json_encode(MC::$path) ?>;
                 },
                 Create: function() {
                     $.post('/admin.php', {
@@ -49,14 +44,14 @@ $(function() {
 <?php die(); } ?>
 $(function() {
     <?php 
-        MC::$content->header = file_get_contents('../header.inc.php');
-        MC::$content->footer = file_get_contents('../footer.inc.php');
+        MC::$content->header = file_get_contents(MC::$dataDir . '/header.inc.php');
+        MC::$content->footer = file_get_contents(MC::$dataDir . '/footer.inc.php');
     ?>
     var content = <?php echo json_encode(MC::$content) ?>; 
-    var config = <?php echo json_encode($config) ?>;
-    var path = <?php echo json_encode($path) ?>;
-    var styles = {site: <?php echo json_encode(file_get_contents('style/site.css')) ?>};
-    var template = <?php echo json_encode(file_get_contents('../template/' . $config->routes->$path . '.inc.php')); ?>;
+    var config = <?php echo json_encode(MC::$config) ?>;
+    var path = <?php echo json_encode(MC::$path) ?>;
+    var styles = {site: <?php echo json_encode(file_get_contents(MC::$dataDir . '/' . DIR_STYLE . 'site.css')) ?>};
+    var template = <?php echo json_encode(file_get_contents(MC::$dataDir . '/' . DIR_TEMPLATE . MC::$config->routes->{MC::$path} . '.inc.php')); ?>;
 
 
     var relocateAdminButtons = function() {
@@ -227,7 +222,7 @@ $(function() {
                         },
                         Save: function() {
                             $.post('/admin.php', {
-                                template: <?php echo json_encode($config->routes->$path) ?>, 
+                                template: <?php echo json_encode(MC::$config->routes->{MC::$path}) ?>, 
                                 value: editor.getSession().getValue()
                             }, function(){
                                 window.location.href = '/' + path;

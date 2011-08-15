@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+require '../MC.php';
+
 if(isset($_GET['magic']) && $_GET['magic'] == 'token') {
     $_SESSION['admin'] = true;
     header('location:/'); 
@@ -14,73 +16,40 @@ if(!isset($_SESSION['admin'])) {
     header('location:/'); 
 }
 
-function delim() {
-    return "\n~~######~~" . date('Y-m-d H:i:s', time()) . "~~######~~\n";
-}
 
 if(isset($_POST['newRoute']) && isset($_POST['template'])) {
-    file_put_contents('../history/config.json', file_get_contents('../config.json') . ",\n", FILE_APPEND);
-    $config = json_decode(file_get_contents('../config.json'));
-    $route = strtolower($_POST['newRoute']); 
-    $config->routes->$route = $_POST['template'];
-    file_put_contents('../content/' . $route . '.json', '{}'); 
-    file_put_contents('../config.json', json_encode($config)); 
-    die('RELOAD');
+	$route = strtolower($_POST['newRoute']);
+
+	$config = new JSONAuditableFile('config');	
+	$config->data->routes->$route = $_POST['template'];
+	$config->update();
+
+	$content = new JSONAuditableFile(DIR_CONTENT . $route);
+	$content->update();
+} 
+else if(isset($_POST['template'])) {
+	AuditableFile::save(DIR_TEMPLATE . $_POST['template'] . '.inc.php', $_POST['value']);
+} 
+else if(isset($_POST['stylesheet'])) { 
+	AuditableFile::save(DIR_STYLE . $_POST['stylesheet'] . '.css', $_POST['value']);
+} 
+else if(isset($_POST['config'])) {
+	$config = new JSONAuditableFile('config');
+	$config->data = $_POST['config'];
+	$config->update();
 }
-
-if(isset($_POST['template'])) {
-    $file = $_POST['template'] . '.inc.php';
-    file_put_contents('../history/template/' . $file, file_get_contents('../template/' . $file) . delim(), FILE_APPEND);
-    file_put_contents('../template/' . $file, $_POST['value']); 
-    die('RELOAD');
-}
-
-if(isset($_POST['stylesheet'])) { 
-    $file = $_POST['stylesheet'] . '.css';
-    file_put_contents('../history/www/style/' . $file, file_get_contents('style/' . $file) . delim(), FILE_APPEND);
-    file_put_contents('style/' . $file, $_POST['value']); 
-    die('RELOAD');
-}
-
-if(isset($_POST['config'])) {
-    file_put_contents('../history/config.json', file_get_contents('../config.json') . ",\n", FILE_APPEND);
-    file_put_contents('../config.json', json_encode($_POST['config']));
-    die('RELOAD');
-}
-
-
-if(isset($_POST['path']) && isset($_POST['section']) && isset($_POST['value'])) {
+else if(isset($_POST['path']) && isset($_POST['section']) && isset($_POST['value'])) {
     $path = $_POST['path'];
     $section = $_POST['section'];
-    
-    $config = json_decode(file_get_contents('../config.json'));
+    $config = JSONAuditableFile::getData('config');
 
     if(isset($config->routes->$path)) {
         if($section == 'header' || $section == 'footer') {
-            $file = $section . '.inc.php';
-            file_put_contents(
-                '../history/' . $file, 
-                file_get_contents('../' . $file) . delim(), 
-                FILE_APPEND);
-
-            file_put_contents('../' . $file, $_POST['value']);
-            echo 'RELOAD';
+			AuditableFile::save($section . '.inc.php', $_POST['value']);
         } else {
-            $file = 'content/' . $path . '.json';
-            $content = file_get_contents('../' . $file); 
-            
-            file_put_contents(
-                '../history/' . $file, 
-                $content . ",\n", 
-                FILE_APPEND);
-
-            $current = json_decode($content); 
-            $current->$section = $_POST['value'];
-
-            file_put_contents('../' . $file, json_encode($current)); 
+			$content = new JSONAuditableFile(DIR_CONTENT . $path);
+			$content->$section = $_POST['value'];
+			$content->update();
         }
     }
-
-    die();
 }
-
